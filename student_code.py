@@ -143,6 +143,62 @@ class KnowledgeBase(object):
         ####################################################
         # Student code goes here
 
+        if (isinstance(fact_or_rule, Fact)):
+            if (fact_or_rule in self.facts):
+                fact = self._get_fact(fact_or_rule)
+                asserted = ' ASSERTED' if fact.asserted else ''
+                result = f'fact: ({fact.statement.predicate} {" ".join(map(str,fact.statement.terms))}){asserted}'
+                if (not fact.asserted):
+                    result += '\n'
+                    result += self._kb_explain_traverse(fact)
+                print(result)
+                return result
+            else:
+                return 'Fact is not in the KB'
+        elif (isinstance(fact_or_rule, Rule)):
+            if (fact_or_rule in self.rules):
+                rule = self._get_rule(fact_or_rule)
+                asserted = ' ASSERTED' if rule.asserted else ''
+                lhs = map(lambda s: f'({s.predicate} {" ".join(map(str,s.terms))})', rule.lhs)
+                result = f'rule: ({", ".join(lhs)}) -> ({rule.rhs.predicate} {" ".join(map(str,rule.rhs.terms))}){asserted}'
+                if (not rule.asserted):
+                    result += '\n'
+                    result += self._kb_explain_traverse(rule)
+                print(result)
+                return result
+            else:
+                return 'Rule is not in the KB'
+        else:
+            return False
+
+    def _kb_explain_traverse(self, fact_or_rule, indent='  '):
+        if (len(fact_or_rule.supported_by) == 0):
+            return ''
+        
+        result = ''
+        for (f, r) in fact_or_rule.supported_by:
+            entry = f'{indent}SUPPORTED BY\n'
+            tab = indent + '  '
+            fact = self._get_fact(f)
+            rule = self._get_rule(r)
+            # handle fact
+            asserted = ' ASSERTED' if fact.asserted else ''
+            entry += f'{tab}fact: ({fact.statement.predicate} {" ".join(map(str,fact.statement.terms))}){asserted}\n'
+            # handle rule
+            asserted = ' ASSERTED' if rule.asserted else ''
+            lhs = map(lambda s: f'({s.predicate} {" ".join(map(str,s.terms))})', rule.lhs)
+            entry += f'{tab}rule: ({", ".join(lhs)}) -> ({rule.rhs.predicate} {" ".join(map(str,rule.rhs.terms))}){asserted}\n'
+            
+            # decide whether to explain
+            if (not fact.asserted):
+                entry += self._kb_explain_traverse(fact, indent + '    ')
+            if (not rule.asserted):
+                entry += self._kb_explain_traverse(rule, indent + '    ')
+            
+            # add entry to result
+            result += entry
+        
+        return result
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
