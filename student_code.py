@@ -165,10 +165,10 @@ class KnowledgeBase(object):
             return False
 
     def _kb_explain_traverse(self, fact_or_rule, indent='  '):
-        result = ''
         if (len(fact_or_rule.supported_by) == 0):
-            return result
+            return ''
         
+        result = ''
         for (f, r) in fact_or_rule.supported_by:
             entry = f'{indent}SUPPORTED BY\n'
             fact = self._get_fact(f)
@@ -176,8 +176,6 @@ class KnowledgeBase(object):
             # handle fact
             entry += f'{indent}  {self._kb_explain_str_fact(fact)}\n'
             # handle rule
-            asserted = ' ASSERTED' if rule.asserted else ''
-            lhs = map(lambda s: f'({s.predicate} {" ".join(map(str,s.terms))})', rule.lhs)
             entry += f'{indent}  {self._kb_explain_str_rule(rule)}\n'
             
             # decide whether to explain
