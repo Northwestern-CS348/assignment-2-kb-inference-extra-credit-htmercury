@@ -151,7 +151,6 @@ class KnowledgeBase(object):
                 if (not fact.asserted):
                     result += '\n'
                     result += self._kb_explain_traverse(fact)
-                print(result)
                 return result
             else:
                 return 'Fact is not in the KB'
@@ -164,7 +163,6 @@ class KnowledgeBase(object):
                 if (not rule.asserted):
                     result += '\n'
                     result += self._kb_explain_traverse(rule)
-                print(result)
                 return result
             else:
                 return 'Rule is not in the KB'
