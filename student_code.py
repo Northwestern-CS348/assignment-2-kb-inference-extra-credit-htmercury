@@ -147,8 +147,11 @@ class KnowledgeBase(object):
             if (fact_or_rule in self.facts):
                 fact = self._get_fact(fact_or_rule)
                 result = self._kb_explain_str_fact(fact)
-                if (not fact.asserted):
-                    result += f'\n{self._kb_explain_traverse(fact)}'
+                if (len(fact.supported_by) != 0):
+                    supports = ""
+                    for pair in fact.supported_by:
+                        supports += f'\n  SUPPORTED BY{"".join(map(self._kb_explain_traverse,pair))}'
+                    result += supports
                 return result
             else:
                 return 'Fact is not in the KB'
@@ -156,38 +159,47 @@ class KnowledgeBase(object):
             if (fact_or_rule in self.rules):
                 rule = self._get_rule(fact_or_rule)
                 result = self._kb_explain_str_rule(rule)
-                if (not rule.asserted):
-                    result += f'\n{self._kb_explain_traverse(rule)}'
+                if (len(rule.supported_by) != 0):
+                    supports = ""
+                    for pair in rule.supported_by:
+                        supports += f'\n  SUPPORTED BY{"".join(map(self._kb_explain_traverse,pair))}'
+                    result += supports
                 return result
             else:
                 return 'Rule is not in the KB'
         else:
             return False
 
-    def _kb_explain_traverse(self, fact_or_rule, indent='  '):
-        if (len(fact_or_rule.supported_by) == 0):
-            return ''
-        
-        result = ''
-        for (f, r) in fact_or_rule.supported_by:
-            entry = f'{indent}SUPPORTED BY\n'
-            fact = self._get_fact(f)
-            rule = self._get_rule(r)
-            # handle fact
-            entry += f'{indent}  {self._kb_explain_str_fact(fact)}\n'
-            # handle rule
-            entry += f'{indent}  {self._kb_explain_str_rule(rule)}\n'
-            
-            # decide whether to explain
-            if (not fact.asserted):
-                entry += self._kb_explain_traverse(fact, indent + '    ')
-            if (not rule.asserted):
-                entry += self._kb_explain_traverse(rule, indent + '    ')
-            
-            # add entry to result
-            result += entry
-        
-        return result
+    def _kb_explain_traverse(self, fact_or_rule, indent='\n  '):
+        result = indent + '  '
+        if (isinstance(fact_or_rule, Fact)):
+            if (fact_or_rule in self.facts):
+                fact = self._get_fact(fact_or_rule)
+                result += self._kb_explain_str_fact(fact)
+                tab = indent + '    '
+                if (len(fact.supported_by) != 0):
+                    supports = ""
+                    for pair in fact.supported_by:
+                        supports += f'{tab}SUPPORTED BY{"".join(map(lambda fr: self._kb_explain_traverse(fr, tab),pair))}'
+                    result += supports
+                return result
+            else:
+                return 'Fact is not in the KB'
+        elif (isinstance(fact_or_rule, Rule)):
+            if (fact_or_rule in self.rules):
+                rule = self._get_rule(fact_or_rule)
+                result += self._kb_explain_str_rule(rule)
+                tab = indent + '    '
+                if (len(rule.supported_by) != 0):
+                    supports = ""
+                    for pair in rule.supported_by:
+                        supports += f'{tab}SUPPORTED BY{"".join(map(lambda fr: self._kb_explain_traverse(fr, tab),pair))}'
+                    result += supports
+                return result
+            else:
+                return 'Rule is not in the KB'
+        else:
+            return False
 
     def _kb_explain_str_fact(self, fact):
         asserted = ' ASSERTED' if fact.asserted else ''
